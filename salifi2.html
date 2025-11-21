@@ -1,0 +1,1334 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SaliFi Deal Hub - Make.com Integration</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <style>
+    body{font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#f5f7fa}
+    .container{max-width:1100px}
+    .card{border-radius:8px}
+    .dropzone{border:2px dashed #d6dde6; padding:28px; border-radius:8px; background:#fff; cursor:pointer}
+    .dropzone.dragover{border-color:#3b82f6; background:#f0f7ff}
+    .funder-card{border:1px solid #e6eef6; padding:10px; border-radius:8px; background:#fff}
+    .small-muted{font-size:13px;color:#6b7280}
+    table td, table th{vertical-align:middle}
+    .notification{position:fixed;top:20px;right:20px;z-index:9999;min-width:300px;animation:slideIn 0.3s}
+    @keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
+    .loading-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000}
+    .spinner{border:4px solid #f3f3f3;border-top:4px solid #3b82f6;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite}
+    @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<div class="container py-4">
+  <!-- Landing Page Dashboard -->
+  <div id="landingPage" style="display:block">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>SaliFi Deal Hub</h2>
+      <div class="d-flex gap-2">
+        <button id="viewAllDealsBtn" class="btn btn-outline-secondary">View All Deals</button>
+        <button id="shopDealBtnLanding" class="btn btn-primary">SHOP WITH SALIFI</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Lead Card -->
+      <div class="col-md-8">
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h4 id="leadName">Loading...</h4>
+                <div class="small-muted" id="leadId">Lead ID: ...</div>
+              </div>
+              <span id="leadStatusBadge" class="badge bg-success">Active</span>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <div class="d-flex align-items-start gap-2">
+                  <div style="font-size:20px; color:#3b82f6">👤</div>
+                  <div>
+                    <div class="small-muted">Created By</div>
+                    <strong id="leadOwner">...</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-start gap-2">
+                  <div style="font-size:20px; color:#3b82f6">🏢</div>
+                  <div>
+                    <div class="small-muted">Organization ID</div>
+                    <strong id="leadOrgId">...</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-start gap-2">
+                  <div style="font-size:20px; color:#3b82f6">📞</div>
+                  <div>
+                    <div class="small-muted">Phone</div>
+                    <strong id="leadPhone">...</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-start gap-2">
+                  <div style="font-size:20px; color:#3b82f6">✉️</div>
+                  <div>
+                    <div class="small-muted">Email</div>
+                    <strong id="leadEmail">...</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <div class="d-flex align-items-start gap-2">
+                  <div style="font-size:20px; color:#10b981">📅</div>
+                  <div>
+                    <div class="small-muted">Date Created</div>
+                    <strong id="leadCreated">...</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-start gap-2">
+                  <div style="font-size:20px; color:#10b981">📅</div>
+                  <div>
+                    <div class="small-muted">Date Updated</div>
+                    <strong id="leadUpdated">...</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="small-muted mb-2">Description</div>
+              <p id="leadDescription" class="mb-0" style="line-height:1.5">...</p>
+            </div>
+
+            <div class="mb-3">
+              <div class="small-muted mb-2">URL</div>
+              <a id="leadUrl" href="#" target="_blank">...</a>
+            </div>
+
+            <div>
+              <div class="small-muted mb-2">Contacts</div>
+              <div id="contactsList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity Timeline -->
+        <div class="card">
+          <div class="card-body">
+            <h6 class="mb-3">📅 Activity Timeline</h6>
+            <div id="landingTimeline">
+              <div class="small-muted">Loading activity...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions & Score -->
+      <div class="col-md-4">
+        <div class="card mb-4">
+          <div class="card-body">
+            <h6 class="mb-3">Quick Actions</h6>
+            <button id="shopDealBtnCard" class="btn btn-primary w-100 mb-2">Shop with SaliFi</button>
+            <button class="btn btn-outline-secondary w-100 mb-2">View All Deals</button>
+            <button class="btn btn-outline-secondary w-100 mb-2">Funder Database</button>
+            <button class="btn btn-outline-secondary w-100 mb-2">Send Email</button>
+            <button class="btn btn-outline-secondary w-100 mb-2">Log Call</button>
+            <button class="btn btn-outline-secondary w-100">Add Note</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <h6 class="mb-3">Lead Info</h6>
+            <div id="leadStats" class="small">
+              <div class="mb-2"><strong>Status:</strong> <span id="statStatus">...</span></div>
+              <div class="mb-2"><strong>Updated by:</strong> <span id="statUpdatedBy">...</span></div>
+              <div class="mb-2"><strong>Opportunities:</strong> <span id="statOpps">0</span></div>
+              <div class="mb-2"><strong>Tasks:</strong> <span id="statTasks">0</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deal Submission Dashboard -->
+  <div id="dashboard" class="card p-4" style="display:none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5>Deal Submission Dashboard</h5>
+      <button id="backToLeadBtn" class="btn btn-outline-secondary btn-sm">← Back to Lead</button>
+    </div>
+    
+    <form id="dealForm">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <input id="dealId" type="hidden" value="">
+          <label class="form-label">Deal name</label>
+          <input id="dealName" class="form-control" placeholder="Enter deal name" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Amount requested</label>
+          <input id="amountRequested" class="form-control" type="number" placeholder="150000" required>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Industry</label>
+          <select id="industry" class="form-select">
+            <option>Manufacturing</option>
+            <option>Restaurant</option>
+            <option>Retail</option>
+            <option>Healthcare</option>
+            <option>E-commerce</option>
+            <option>Construction</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Notes from rep</label>
+          <textarea id="notes" rows="3" class="form-control" placeholder="Enter deal notes..."></textarea>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Document Upload</label>
+          <div class="row gy-3">
+            <div class="col-md-6">
+              <div class="dropzone" id="bankDrop" data-type="bank">
+                <div class="text-center">
+                  <div style="font-size:24px">⬆️</div>
+                  <div class="fw-bold">Bank Statements</div>
+                  <div class="small-muted">Drag & drop or click to upload</div>
+                </div>
+                <input class="file-input" type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="dropzone" id="appDrop" data-type="application">
+                <div class="text-center">
+                  <div style="font-size:24px">⬆️</div>
+                  <div class="fw-bold">Application</div>
+                  <div class="small-muted">Drag & drop or click to upload</div>
+                </div>
+                <input class="file-input" type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none">
+              </div>
+            </div>
+          </div>
+          <div id="uploadsList" class="mt-2"></div>
+          <div class="alert alert-info mt-3 small">All uploaded files will be auto-watermarked with SaliFi branding.</div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Select Funders (pulled from Funder Database)</label>
+          <div id="fundersList" class="d-flex gap-2 flex-wrap"></div>
+        </div>
+
+        <div class="col-12 d-flex justify-content-end gap-2">
+          <input id="repEmail" class="form-control w-50" placeholder="Rep email (auto-CC)" value="">
+          <button id="sendBtn" type="button" class="btn btn-success">One-click Send (deals@salifi.com)</button>
+        </div>
+      </div>
+    </form>
+
+    <hr class="my-4">
+
+    <div class="row">
+      <div class="col-md-7">
+        <h6>Offers — Per Funder Tracking</h6>
+        <div id="offersContainer">
+          <!-- offer tables per funder appear here -->
+        </div>
+        <div class="mt-3">
+          <button id="simulateEmailBtn" class="btn btn-outline-secondary">Simulate Incoming Offer Email (demo)</button>
+        </div>
+      </div>
+
+      <div class="col-md-5">
+        <h6>Offer Summary</h6>
+        <div id="offerSummary" class="card p-3">
+          <div id="summaryCounts"></div>
+          <div id="bestOffer" class="mt-2"></div>
+          <div id="lastUpdated" class="mt-2 small-muted"></div>
+        </div>
+
+        <h6 class="mt-4">Timeline</h6>
+        <div id="timeline" class="card p-3 small-muted"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display:none">
+  <div class="text-center text-white">
+    <div class="spinner mb-3"></div>
+    <div id="loadingText">Loading...</div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// CONFIGURATION - YOUR MAKE.COM WEBHOOK
+// ============================================================================
+const API = {
+  makeWebhook: 'https://hook.eu1.make.com/wle3aukhw5bguhna7d15tvdm3n2jiqoy'
+};
+
+// Demo funders
+const demoFunders = [
+  { id: 'capex', name: 'Capital Express', industries:['Retail','Restaurant'], recommended:true },
+  { id: 'quickfund', name: 'Quick Funding Solutions', industries:['E-commerce','Tech'], recommended:false },
+  { id: 'gcp', name: 'Growth Capital Partners', industries:['Healthcare','Construction'], recommended:true }
+];
+
+// State management
+const state = {
+  dealId: '',
+  leadData: null,
+  uploads: [],
+  selectedFunders: new Set(),
+  offers: {}
+};
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+function showLoading(text = 'Loading...') {
+  document.getElementById('loadingText').textContent = text;
+  document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+function hideLoading() {
+  document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+function showNotification(message, type = 'success') {
+  const alert = document.createElement('div');
+  alert.className = `alert alert-${type} notification`;
+  alert.textContent = message;
+  document.body.appendChild(alert);
+  setTimeout(() => alert.remove(), 5000);
+}
+
+function getQueryParam(name) {
+  const url = new URL(window.location.href);
+  return url.searchParams.get(name);
+}
+
+// ============================================================================
+// MAKE.COM INTEGRATION
+// ============================================================================
+
+async function sendToMake(action, data) {
+  try {
+    const payload = {
+      action: action,
+      timestamp: new Date().toISOString(),
+      ...data
+    };
+    
+    console.log('[Make.com] Sending:', action, payload);
+    
+    const response = await fetch(API.makeWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Make.com error: ${response.statusText}`);
+    }
+    
+    const result = await response.json();
+    console.log('[Make.com] Response:', result);
+    return result;
+  } catch (error) {
+    console.error('[Make.com] Error:', error);
+    throw error;
+  }
+}
+
+// Listen for messages from Make.com (for real-time updates)
+window.addEventListener('message', (event) => {
+  const { type, payload } = event.data;
+  console.log('[Make.com] Received message:', type, payload);
+  
+  if (type === 'offer') {
+    handleParsedOfferWebhook(payload);
+  } else if (type === 'dealSubmitted') {
+    showNotification('Deal submitted successfully!');
+    recordTimeline('offer_requested', { at: new Date(), funders: payload.funders });
+  }
+});
+
+// ============================================================================
+// PARSE CLOSE.COM DATA
+// ============================================================================
+
+function parseCloseData(closeData) {
+  console.log('[Close Data] Received:', closeData);
+  
+  // Extract primary contact
+  let ownerName = closeData['Created by Name'] || 'N/A';
+  let phone = 'N/A';
+  let email = 'N/A';
+  
+  // Parse contacts array
+  if (closeData.Contacts && Array.isArray(closeData.Contacts)) {
+    const contacts = closeData.Contacts;
+    if (contacts.length > 0) {
+      const contact = contacts[0];
+      if (contact.phones && contact.phones.length > 0) {
+        phone = contact.phones[0].phone || phone;
+      }
+      if (contact.emails && contact.emails.length > 0) {
+        email = contact.emails[0].email || email;
+      }
+    }
+  }
+  
+  // Extract custom fields
+  const custom = closeData.Custom || {};
+  const amount = custom.funding_need || custom['Funding Need'] || 0;
+  const industry = custom.industry || custom['Industry'] || 'N/A';
+  
+  return {
+    id: closeData['Lead ID'] || 'N/A',
+    name: closeData['Display Name'] || closeData.Name || 'N/A',
+    owner: ownerName,
+    phone: phone,
+    email: email,
+    amount: amount,
+    fundingFormatted: amount ? amount.toLocaleString() : '0',
+    industry: industry,
+    repEmail: email,
+    selectedFunders: [],
+    status: closeData['Status Label'] || 'Active',
+    description: closeData.Description || '',
+    url: closeData.URL || '#',
+    htmlUrl: closeData['HTML URL'] || '#',
+    orgId: closeData['Organization ID'] || 'N/A',
+    dateCreated: closeData['Date Created'] || 'N/A',
+    dateUpdated: closeData['Date Updated'] || 'N/A',
+    createdBy: closeData['Created by Name'] || 'N/A',
+    updatedBy: closeData['Updated by Name'] || 'N/A',
+    contacts: closeData.Contacts || [],
+    opportunities: closeData.Opportunities || [],
+    tasks: closeData.Tasks || [],
+    addresses: closeData.Addresses || []
+  };
+}
+
+// ============================================================================
+// FETCH LEAD DATA
+// ============================================================================
+
+async function fetchLead(leadId) {
+  try {
+    showLoading('Fetching lead from Close.com...');
+    const result = await sendToMake('getLead', { leadId });
+    
+    if (result && result.lead) {
+      return parseCloseData(result.lead);
+    }
+    
+    // If Make.com returns the raw Close data directly
+    if (result && result['Lead ID']) {
+      return parseCloseData(result);
+    }
+    
+    throw new Error('No lead data returned');
+  } catch (err) {
+    console.warn('Lead fetch failed:', err);
+    showNotification('Could not fetch lead data. Using demo mode.', 'warning');
+    
+    // Return demo data
+    return {
+      id: leadId,
+      name: 'Demo Lead - Configure Make.com',
+      owner: 'Demo User',
+      phone: '(555) 123-4567',
+      email: 'demo@example.com',
+      amount: 150000,
+      fundingFormatted: '150,000',
+      industry: 'Manufacturing',
+      repEmail: 'rep@salifi.com',
+      selectedFunders: ['capex'],
+      status: 'Demo Mode',
+      description: 'This is demo data. Connect your Make.com webhook to see real lead data from Close.com.',
+      url: 'https://close.com',
+      htmlUrl: '#',
+      orgId: 'demo-org',
+      dateCreated: new Date().toISOString(),
+      dateUpdated: new Date().toISOString(),
+      createdBy: 'Demo User',
+      updatedBy: 'Demo User',
+      contacts: [],
+      opportunities: [],
+      tasks: [],
+      addresses: []
+    };
+  } finally {
+    hideLoading();
+  }
+}
+
+// ============================================================================
+// POPULATE LANDING PAGE
+// ============================================================================
+
+function populateLandingPage(lead) {
+  state.leadData = lead;
+  
+  document.getElementById('leadName').textContent = lead.name;
+  document.getElementById('leadId').textContent = `Lead ID: ${lead.id}`;
+  document.getElementById('leadOwner').textContent = lead.createdBy;
+  document.getElementById('leadOrgId').textContent = lead.orgId;
+  document.getElementById('leadPhone').textContent = lead.phone;
+  document.getElementById('leadEmail').textContent = lead.email;
+  document.getElementById('leadCreated').textContent = formatDate(lead.dateCreated);
+  document.getElementById('leadUpdated').textContent = formatDate(lead.dateUpdated);
+  document.getElementById('leadDescription').textContent = lead.description;
+  document.getElementById('leadStatusBadge').textContent = lead.status;
+  
+  const urlEl = document.getElementById('leadUrl');
+  urlEl.href = lead.url;
+  urlEl.textContent = lead.url;
+  
+  // Populate stats
+  document.getElementById('statStatus').textContent = lead.status;
+  document.getElementById('statUpdatedBy').textContent = lead.updatedBy;
+  document.getElementById('statOpps').textContent = lead.opportunities.length;
+  document.getElementById('statTasks').textContent = lead.tasks.length;
+  
+  // Populate contacts
+  const contactsList = document.getElementById('contactsList');
+  contactsList.innerHTML = '';
+  if (lead.contacts && lead.contacts.length > 0) {
+    lead.contacts.forEach(contact => {
+      const div = document.createElement('div');
+      div.className = 'small mb-2 p-2 bg-light rounded';
+      div.innerHTML = `
+        <strong>${contact.name || 'Contact'}</strong><br>
+        ${contact.emails ? contact.emails.map(e => e.email).join(', ') : ''}<br>
+        ${contact.phones ? contact.phones.map(p => p.phone).join(', ') : ''}
+      `;
+      contactsList.appendChild(div);
+    });
+  } else {
+    contactsList.innerHTML = '<div class="small-muted">No contacts</div>';
+  }
+  
+  // Populate timeline
+  const timeline = document.getElementById('landingTimeline');
+  timeline.innerHTML = `
+    <div class="d-flex gap-3 mb-3">
+      <div style="width:12px; height:12px; border-radius:50%; background:#10b981; margin-top:2px"></div>
+      <div>
+        <strong>Lead created by ${lead.createdBy}</strong><br>
+        <span class="small-muted">${formatDate(lead.dateCreated)}</span>
+      </div>
+    </div>
+    <div class="d-flex gap-3">
+      <div style="width:12px; height:12px; border-radius:50%; background:#3b82f6; margin-top:2px"></div>
+      <div>
+        <strong>Last updated by ${lead.updatedBy}</strong><br>
+        <span class="small-muted">${formatDate(lead.dateUpdated)}</span>
+      </div>
+    </div>
+  `;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return 'N/A';
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleString();
+  } catch {
+    return dateStr;
+  }
+}
+
+// ============================================================================
+// APPLY LEAD TO FORM
+// ============================================================================
+
+function applyLeadToForm(lead) {
+  document.getElementById('dealId').value = lead.id;
+  document.getElementById('dealName').value = lead.name;
+  if (lead.amount) document.getElementById('amountRequested').value = lead.amount;
+  if (lead.industry) document.getElementById('industry').value = lead.industry;
+  if (lead.description) document.getElementById('notes').value = lead.description;
+  if (lead.repEmail) document.getElementById('repEmail').value = lead.repEmail;
+  
+  state.leadSelectedFunders = new Set(lead.selectedFunders || []);
+}
+
+// ============================================================================
+// LOAD FUNDERS
+// ============================================================================
+
+async function loadFunders() {
+  try {
+    const result = await sendToMake('getFunders', {});
+    if (result && result.funders) {
+      window._fundersCache = result.funders;
+      return result.funders;
+    }
+  } catch (err) {
+    console.warn('Funders fetch failed, using demo', err);
+  }
+  
+  window._fundersCache = demoFunders;
+  return demoFunders;
+}
+
+function renderFunders() {
+  const list = window._fundersCache || demoFunders;
+  const el = document.getElementById('fundersList');
+  el.innerHTML = '';
+  
+  list.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'funder-card d-flex align-items-center gap-2';
+    card.style.minWidth = '170px';
+    card.style.maxWidth = '250px';
+    
+    const badge = document.createElement('div');
+    badge.className = 'rounded bg-light text-center';
+    badge.style.cssText = 'width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-weight:600';
+    badge.innerText = f.name.split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase();
+    
+    const info = document.createElement('div');
+    info.style.flex = '1';
+    info.innerHTML = `<div style="font-weight:600">${f.name}</div><div class="small-muted">${(f.industries || []).slice(0, 2).join(', ')}${(f.industries || []).length > 2 ? ' +' : ''}</div>`;
+    
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    const initiallySelected = (state.leadSelectedFunders && state.leadSelectedFunders.has(f.id)) || f.recommended;
+    cb.checked = initiallySelected;
+    if (cb.checked) state.selectedFunders.add(f.id);
+    
+    cb.onchange = (e) => {
+      if (e.target.checked) state.selectedFunders.add(f.id);
+      else state.selectedFunders.delete(f.id);
+      renderOffersUI();
+      updateSummary();
+    };
+    
+    card.appendChild(badge);
+    card.appendChild(info);
+    card.appendChild(cb);
+    el.appendChild(card);
+  });
+}
+
+// ============================================================================
+// FILE UPLOAD & WATERMARKING
+// ============================================================================
+
+function setupDropzone(id) {
+  const dz = document.getElementById(id);
+  const input = dz.querySelector('.file-input');
+  
+  dz.addEventListener('click', () => input.click());
+  
+  ['dragenter', 'dragover'].forEach(ev =>
+    dz.addEventListener(ev, e => {
+      e.preventDefault();
+      dz.classList.add('dragover');
+    })
+  );
+  
+  ['dragleave', 'drop'].forEach(ev =>
+    dz.addEventListener(ev, e => {
+      e.preventDefault();
+      dz.classList.remove('dragover');
+    })
+  );
+  
+  dz.addEventListener('drop', async e => {
+    const files = Array.from(e.dataTransfer.files);
+    await handleFiles(files, dz.dataset.type);
+  });
+  
+  input.addEventListener('change', async e => {
+    const files = Array.from(e.target.files);
+    await handleFiles(files, dz.dataset.type);
+    input.value = '';
+  });
+}
+
+async function handleFiles(files, type) {
+  showLoading('Watermarking files...');
+  try {
+    for (const f of files) {
+      const watermarked = await watermarkFileIfNeeded(f);
+      const obj = {
+        name: f.name,
+        originalName: f.name,
+        type,
+        file: f,
+        watermarkedFile: watermarked
+      };
+      state.uploads.push(obj);
+    }
+    renderUploads();
+  } finally {
+    hideLoading();
+  }
+}
+
+function renderUploads() {
+  const list = document.getElementById('uploadsList');
+  list.innerHTML = '';
+  
+  state.uploads.forEach((u, idx) => {
+    const row = document.createElement('div');
+    row.className = 'd-flex align-items-center justify-content-between p-2 bg-white mt-2 rounded border';
+    row.innerHTML = `
+      <div>
+        <strong>${u.name}</strong>
+        <div class="small-muted">${u.type}</div>
+      </div>
+      <div class="d-flex gap-2">
+        <button data-idx="${idx}" class="btn btn-sm btn-outline-primary preview-btn">Preview</button>
+        <button data-idx="${idx}" class="btn btn-sm btn-outline-danger delete-btn">Delete</button>
+      </div>
+    `;
+    
+    row.querySelector('.preview-btn').addEventListener('click', () => {
+      downloadBlob(u.watermarkedFile, 'wm_' + u.name);
+    });
+    
+    row.querySelector('.delete-btn').addEventListener('click', () => {
+      state.uploads.splice(idx, 1);
+      renderUploads();
+    });
+    
+    list.appendChild(row);
+  });
+}
+
+function downloadBlob(fileOrBlob, filename) {
+  const url = URL.createObjectURL(fileOrBlob instanceof Blob ? fileOrBlob : new Blob([fileOrBlob]));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function watermarkFileIfNeeded(file) {
+  const name = file.name.toLowerCase();
+  if (name.endsWith('.pdf')) return await watermarkPDF(file);
+  if (['.png', '.jpg', '.jpeg', '.webp'].some(ext => name.endsWith(ext))) return await watermarkImage(file);
+  return file;
+}
+
+async function watermarkImage(file) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = async () => {
+      const canvas = document.createElement('canvas');
+      const maxW = 1600;
+      const scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      const text = 'SaliFi — CONFIDENTIAL';
+      ctx.font = `${Math.max(14, Math.floor(canvas.width / 20))}px Arial`;
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.textAlign = 'center';
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(-0.4);
+      ctx.fillText(text, 0, 0);
+      
+      canvas.toBlob(b => {
+        const f = new File([b], file.name, { type: b.type });
+        res(f);
+      }, 'image/jpeg', 0.9);
+    };
+    img.onerror = e => {
+      console.error('img load err', e);
+      res(file);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+async function watermarkPDF(file) {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+    const helv = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+    const pages = pdfDoc.getPages();
+    
+    for (const page of pages) {
+      const { width, height } = page.getSize();
+      page.drawText('SaliFi — CONFIDENTIAL', {
+        x: width / 2 - 200,
+        y: height / 2,
+        size: 36,
+        font: helv,
+        color: PDFLib.rgb(0.8, 0.8, 0.8),
+        rotate: PDFLib.degrees(-30),
+        opacity: 0.35
+      });
+    }
+    
+    const pdfBytes = await pdfDoc.save();
+    return new File([pdfBytes], file.name, { type: 'application/pdf' });
+  } catch (err) {
+    console.warn('PDF watermark failed, returning original', err);
+    return file;
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadWatermarkedFiles() {
+  const results = [];
+  showLoading('Uploading files to Google Drive...');
+  
+  try {
+    for (const u of state.uploads) {
+      const base64 = await fileToBase64(u.watermarkedFile);
+      
+      const result = await sendToMake('uploadFile', {
+        fileName: u.name,
+        fileType: u.type,
+        fileData: base64,
+        originalName: u.originalName,
+        dealId: state.dealId
+      });
+      
+      if (result && result.url) {
+        results.push({ name: u.name, url: result.url });
+      } else {
+        const url = URL.createObjectURL(u.watermarkedFile);
+        results.push({ name: u.name, url });
+      }
+    }
+  } finally {
+    hideLoading();
+  }
+  
+  return results;
+}
+
+// ============================================================================
+// SUBMIT DEAL
+// ============================================================================
+
+const sendBtn = document.getElementById('sendBtn');
+sendBtn.addEventListener('click', async () => {
+  try {
+    sendBtn.disabled = true;
+    sendBtn.innerText = 'Uploading files...';
+    
+    const uploaded = await uploadWatermarkedFiles();
+    
+    sendBtn.innerText = 'Submitting deal...';
+    
+    const payload = {
+      dealId: document.getElementById('dealId').value,
+      name: document.getElementById('dealName').value,
+      amount: Number(document.getElementById('amountRequested').value || 0),
+      industry: document.getElementById('industry').value,
+      notes: document.getElementById('notes').value,
+      funders: Array.from(state.selectedFunders),
+      files: uploaded,
+      to: 'deals@salifi.com',
+      cc: document.getElementById('repEmail').value,
+      submittedAt: new Date().toISOString(),
+      leadData: state.leadData
+    };
+    
+    const result = await sendToMake('submitDeal', payload);
+    
+    if (result && result.success) {
+      showNotification('✅ Deal submitted successfully!');
+      recordTimeline('offer_requested', { at: new Date(), funders: payload.funders });
+    } else {
+      showNotification('Deal submitted to Make.com', 'info');
+      recordTimeline('offer_requested', { at: new Date(), funders: payload.funders });
+    }
+    
+    updateSummary();
+  } catch (err) {
+    showNotification('❌ Send failed: ' + err.message, 'danger');
+    console.error(err);
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.innerText = 'One-click Send (deals@salifi.com)';
+  }
+});
+
+// ============================================================================
+// OFFERS MANAGEMENT
+// ============================================================================
+
+function renderOffersUI() {
+  const container = document.getElementById('offersContainer');
+  container.innerHTML = '';
+  const funderList = window._fundersCache || demoFunders;
+  
+  funderList.forEach(f => {
+    if (!state.selectedFunders.has(f.id)) return;
+    
+    const card = document.createElement('div');
+    card.className = 'card p-3 mb-3';
+    card.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>${f.name}</strong>
+          <div class="small-muted">${f.industries.join(', ')}</div>
+        </div>
+        <div>
+          <button data-f="${f.id}" class="btn btn-sm btn-outline-primary">Add Offer</button>
+        </div>
+      </div>
+      <div class="mt-3">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Amt</th>
+              <th>Factor</th>
+              <th>Term</th>
+              <th>Payment</th>
+              <th>Fees</th>
+              <th>Max Approval</th>
+              <th>Buyouts</th>
+              <th>Conditions</th>
+              <th>Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="offers_${f.id}"></tbody>
+        </table>
+      </div>
+    `;
+    
+    container.appendChild(card);
+    card.querySelector('button').addEventListener('click', () => openManualOfferModal(f.id));
+    renderOffersTableForFunder(f.id);
+  });
+}
+
+function renderOffersTableForFunder(funderId) {
+  const tbody = document.getElementById('offers_' + funderId);
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  
+  const rows = state.offers[funderId] || [];
+  rows.forEach((o, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${o.amount ?? ''}</td>
+      <td>${o.factor ?? ''}</td>
+      <td>${o.term ?? ''}</td>
+      <td>${o.payment ?? ''}</td>
+      <td>${o.fees ?? ''}</td>
+      <td>${o.maxApproval ?? ''}</td>
+      <td>${o.buyouts ?? ''}</td>
+      <td>${o.conditions ?? ''}</td>
+      <td>${new Date(o.receivedAt).toLocaleString()}</td>
+      <td><button data-f="${funderId}" data-i="${idx}" class="btn btn-sm btn-outline-danger">Delete</button></td>
+    `;
+    tbody.appendChild(tr);
+    
+    tr.querySelector('button').addEventListener('click', e => {
+      const fi = e.target.dataset.f;
+      const ii = Number(e.target.dataset.i);
+      state.offers[fi].splice(ii, 1);
+      renderOffersTableForFunder(fi);
+      updateSummary();
+    });
+  });
+}
+
+async function openManualOfferModal(funderId) {
+  const amount = prompt('Offer amount (e.g., 75000)');
+  if (!amount) return;
+  
+  const factor = prompt('Factor rate (e.g., 1.15)', '', '');
+  if (factor === null) return;
+  
+  const term = prompt('Term (e.g., 12 months)');
+  if (term === null) return;
+  
+  const payment = prompt('Payment amount (optional)');
+  const fees = prompt('Fees (optional)');
+  const maxApproval = prompt('Max approval (optional)');
+  const buyouts = prompt('Buyouts required (Y/N)');
+  const conditions = prompt('Conditions (optional)');
+  
+  const offer = {
+    amount: Number(amount),
+    factor,
+    term,
+    payment,
+    fees,
+    maxApproval,
+    buyouts,
+    conditions,
+    receivedAt: new Date().toISOString()
+  };
+  
+  state.offers[funderId] = state.offers[funderId] || [];
+  state.offers[funderId].push(offer);
+  
+  renderOffersTableForFunder(funderId);
+  updateSummary();
+  recordTimeline('offer_received', { funder: funderId, at: new Date() });
+}
+
+function handleParsedOfferWebhook(parsed) {
+  if (!parsed.dealId || parsed.dealId !== document.getElementById('dealId').value) {
+    console.warn('offer webhook for different deal', parsed);
+    return;
+  }
+  
+  const f = parsed.funderId;
+  const offer = {
+    amount: parsed.amount || null,
+    factor: parsed.factor || null,
+    term: parsed.term || null,
+    payment: parsed.payment || null,
+    fees: parsed.fees || null,
+    maxApproval: parsed.maxApproval || null,
+    buyouts: parsed.buyouts || null,
+    conditions: parsed.conditions || null,
+    receivedAt: parsed.receivedAt || new Date().toISOString()
+  };
+  
+  state.offers[f] = state.offers[f] || [];
+  state.offers[f].push(offer);
+  
+  renderOffersTableForFunder(f);
+  updateSummary();
+  recordTimeline('offer_received', { funder: f, at: new Date(offer.receivedAt) });
+  
+  showNotification(`New offer received from ${f}!`);
+}
+
+document.getElementById('simulateEmailBtn').addEventListener('click', () => {
+  const sampleParsed = {
+    dealId: document.getElementById('dealId').value,
+    funderId: 'capex',
+    amount: 150000,
+    factor: 1.10,
+    term: '12 months',
+    payment: '$14,000/mo',
+    fees: '$2,000',
+    maxApproval: 150000,
+    buyouts: 'No',
+    conditions: 'Signed application, 3 months bank statements',
+    receivedAt: new Date().toISOString()
+  };
+  handleParsedOfferWebhook(sampleParsed);
+  showNotification('Simulated parsed offer added for Capital Express', 'info');
+});
+
+let offersPollInterval = null;
+
+function startOffersPolling() {
+  if (offersPollInterval) clearInterval(offersPollInterval);
+  offersPollInterval = setInterval(async () => {
+    await pollOffersOnce();
+  }, 8000);
+  pollOffersOnce();
+}
+
+async function pollOffersOnce() {
+  const dealId = document.getElementById('dealId').value;
+  if (!dealId) return;
+  
+  try {
+    const result = await sendToMake('getOffers', { dealId });
+    
+    if (result && result.offers) {
+      Object.keys(result.offers).forEach(fid => {
+        state.offers[fid] = result.offers[fid];
+        renderOffersTableForFunder(fid);
+      });
+      updateSummary();
+    }
+  } catch (err) {
+    console.warn('pollOffers failed', err);
+  }
+}
+
+function updateSummary() {
+  const summaryCounts = document.getElementById('summaryCounts');
+  let totalOffers = 0;
+  let declined = 0;
+  let pending = 0;
+  let best = null;
+  let last = null;
+  
+  state.selectedFunders.forEach(fid => {
+    const arr = state.offers[fid] || [];
+    if (arr.length === 0) pending++;
+    totalOffers += arr.length;
+    
+    arr.forEach(o => {
+      if (!last || new Date(o.receivedAt) > new Date(last)) last = o.receivedAt;
+      if (o.amount && (best === null || Number(o.amount) > Number(best.amount))) {
+        best = { ...o, funder: fid };
+      }
+    });
+    
+    if (arr.some(a => a.amount === 0 || (a.conditions && a.conditions.toLowerCase().includes('declined')))) {
+      declined++;
+    }
+  });
+  
+  summaryCounts.innerHTML = `
+    <div>Total funders selected: ${state.selectedFunders.size}</div>
+    <div>Offers received: <strong>${totalOffers}</strong></div>
+    <div>Pending funders: <strong>${pending}</strong></div>
+    <div>Declined: <strong>${declined}</strong></div>
+  `;
+  
+  const bestOfferEl = document.getElementById('bestOffer');
+  bestOfferEl.innerHTML = best
+    ? `<div><strong>Best Offer:</strong> ${best.funder} — ${best.amount} (${best.term})</div>`
+    : '<div><strong>Best Offer:</strong> none</div>';
+  
+  const lastUpdated = document.getElementById('lastUpdated');
+  lastUpdated.innerText = last ? 'Last update: ' + new Date(last).toLocaleString() : 'No offers yet';
+}
+
+// ============================================================================
+// TIMELINE
+// ============================================================================
+
+const timelineEvents = [];
+
+function recordTimeline(type, data) {
+  timelineEvents.push({ type, at: new Date(), data });
+  renderTimeline();
+}
+
+function renderTimeline() {
+  const t = document.getElementById('timeline');
+  t.innerHTML = '';
+  
+  timelineEvents.slice().reverse().forEach(ev => {
+    const el = document.createElement('div');
+    el.innerHTML = `
+      <div>
+        <strong>${ev.type.replace('_', ' ')}</strong> — 
+        <span class="small-muted">${ev.at.toLocaleString()}</span>
+      </div>
+    `;
+    t.appendChild(el);
+  });
+}
+
+// ============================================================================
+// UI NAVIGATION
+// ============================================================================
+
+const dashboard = document.getElementById('dashboard');
+const landingPage = document.getElementById('landingPage');
+const shopDealBtnLanding = document.getElementById('shopDealBtnLanding');
+const shopDealBtnCard = document.getElementById('shopDealBtnCard');
+const backToLeadBtn = document.getElementById('backToLeadBtn');
+
+function showDashboard() {
+  landingPage.style.display = 'none';
+  dashboard.style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function showLanding() {
+  landingPage.style.display = 'block';
+  dashboard.style.display = 'none';
+  window.scrollTo(0, 0);
+}
+
+shopDealBtnLanding.addEventListener('click', showDashboard);
+shopDealBtnCard.addEventListener('click', showDashboard);
+backToLeadBtn.addEventListener('click', showLanding);
+document.getElementById('viewAllDealsBtn').addEventListener('click', () => {
+  showNotification('View All Deals - coming soon', 'info');
+});
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+
+async function initDynamic() {
+  const contextLeadId = getQueryParam('lead_id') || getQueryParam('deal_id') || 'lead_gBiHFaTPx9NKuMUhhnoXDmsU1jEWHPOpqo4MMmuEZ5m';
+  
+  if (contextLeadId) {
+    try {
+      const lead = await fetchLead(contextLeadId);
+      state.dealId = lead.id;
+      applyLeadToForm(lead);
+      populateLandingPage(lead);
+    } catch (e) {
+      console.warn('lead fetch failed', e);
+      showNotification('Error loading lead data', 'danger');
+    }
+  }
+  
+  await loadFunders();
+  renderFunders();
+  renderOffersUI();
+  updateSummary();
+  startOffersPolling();
+  
+  setupDropzone('bankDrop');
+  setupDropzone('appDrop');
+}
+
+// Start the app
+initDynamic();
+
+// ============================================================================
+// CONSOLE INSTRUCTIONS
+// ============================================================================
+
+console.log('');
+console.log('╔════════════════════════════════════════════════════════════════╗');
+console.log('║        SALIFI DEAL HUB - MAKE.COM INTEGRATION ACTIVE          ║');
+console.log('╚════════════════════════════════════════════════════════════════╝');
+console.log('');
+console.log('✅ Webhook configured: ' + API.makeWebhook);
+console.log('');
+console.log('📋 MAKE.COM SCENARIOS TO BUILD:');
+console.log('');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('SCENARIO 1: Get Lead Data from Close.com');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('Trigger: Webhook receives {"action": "getLead", "leadId": "..."}');
+console.log('');
+console.log('Steps:');
+console.log('  1. Close.com API → Get Lead');
+console.log('     - Use "Get a Lead" module');
+console.log('     - Lead ID from webhook: {{1.leadId}}');
+console.log('  2. Response → HTTP module');
+console.log('     - Status: 200');
+console.log('     - Body: {"lead": {{close.lead}} }');
+console.log('');
+console.log('Expected Close.com fields to pass through:');
+console.log('  - Lead ID, Display Name, Name');
+console.log('  - Contacts (array with phones, emails)');
+console.log('  - Custom fields (Funding Need, Industry)');
+console.log('  - Status Label, Description, URL');
+console.log('  - Date Created, Date Updated');
+console.log('  - Created by Name, Updated by Name');
+console.log('');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('SCENARIO 2: Upload File to Google Drive');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('Trigger: Webhook receives {"action": "uploadFile", ...}');
+console.log('');
+console.log('Steps:');
+console.log('  1. Text Parser → Decode base64');
+console.log('     - Input: {{1.fileData}}');
+console.log('     - Pattern: .*');
+console.log('     - Encoding: base64');
+console.log('  2. Google Drive → Upload File');
+console.log('     - File name: {{1.fileName}}');
+console.log('     - Data: {{textParser.data}}');
+console.log('     - Folder: /SaliFi Deals/{{1.dealId}}');
+console.log('  3. Response:');
+console.log('     - {"success": true, "url": "{{drive.webViewLink}}"}');
+console.log('');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('SCENARIO 3: Submit Deal');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('Trigger: Webhook receives {"action": "submitDeal", ...}');
+console.log('');
+console.log('Steps:');
+console.log('  1. Gmail → Send Email');
+console.log('     - To: {{1.to}}');
+console.log('     - CC: {{1.cc}}');
+console.log('     - Subject: New Deal Submission - {{1.name}}');
+console.log('     - Body:');
+console.log('       Deal: {{1.name}}');
+console.log('       Amount: ${{1.amount}}');
+console.log('       Industry: {{1.industry}}');
+console.log('       Notes: {{1.notes}}');
+console.log('       ');
+console.log('       Files: (loop through {{1.files}})');
+console.log('       - {{item.name}}: {{item.url}}');
+console.log('  2. Close.com → Update Lead');
+console.log('     - Lead ID: {{1.dealId}}');
+console.log('     - Custom field "deal_status": "Submitted"');
+console.log('  3. Response:');
+console.log('     - {"success": true}');
+console.log('');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('SCENARIO 4: Parse Funder Email → Store Offer');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('Trigger: New email at deals@salifi.com');
+console.log('');
+console.log('Steps:');
+console.log('  1. Gmail → Watch Emails');
+console.log('  2. Router → Filter by sender domain');
+console.log('     - If from @capexfunding.com → funderId = "capex"');
+console.log('     - If from @quickfund.com → funderId = "quickfund"');
+console.log('  3. Text Parser → Extract offer details:');
+console.log('     - Amount: \\$([0-9,]+)');
+console.log('     - Factor: ([0-9.]+)');
+console.log('     - Term: ([0-9]+) months');
+console.log('  4. Google Sheets → Add Row (or Airtable)');
+console.log('     - Columns: dealId, funderId, amount, factor, term, etc.');
+console.log('  5. (Optional) HTTP POST to notify dashboard');
+console.log('');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('SCENARIO 5: Get Offers');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('Trigger: Webhook receives {"action": "getOffers", "dealId": "..."}');
+console.log('');
+console.log('Steps:');
+console.log('  1. Google Sheets → Search Rows');
+console.log('     - Filter: dealId = {{1.dealId}}');
+console.log('  2. Iterator + Aggregator → Group by funderId');
+console.log('  3. Response:');
+console.log('     - {"offers": {');
+console.log('         "capex": [{offer1}, {offer2}],');
+console.log('         "quickfund": [{offer3}]');
+console.log('       }}');
+console.log('');
+console.log('╔════════════════════════════════════════════════════════════════╗');
+console.log('║  USAGE:');
+console.log('║  1. Open with ?lead_id=YOUR_CLOSE_LEAD_ID');
+console.log('║  2. Lead data auto-loads from Close.com');
+console.log('║  3. Click "Shop with SaliFi" to submit deals');
+console.log('║  4. Files auto-upload to Google Drive');
+console.log('║  5. Offers auto-track from funder emails');
+console.log('╚════════════════════════════════════════════════════════════════╝');
+console.log('');
